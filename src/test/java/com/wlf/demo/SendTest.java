@@ -2,12 +2,12 @@ package com.wlf.demo;
 
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Connection;
-
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 
 public class SendTest {
 	
-	private static String QUEUE_NAME="test";
+	private static String QUEUE_NAME="testQueue";
 
 	public static void main(String[] argv) throws Exception{
 		//create connection
@@ -17,6 +17,7 @@ public class SendTest {
 		factory.setUsername("admin");
 		factory.setPassword("nmamtf");
 		factory.setVirtualHost("/");
+		
 		Connection connection = factory.newConnection();
 		//create channel
 		Channel channel = connection.createChannel();
