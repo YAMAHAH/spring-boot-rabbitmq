@@ -2,32 +2,24 @@ package com.wlf.demo.bussiness;
 
 import org.springframework.stereotype.Service;
 
-import com.wlf.demo.props.RabbitmqProps;
-
-import java.util.UUID;
+import com.alibaba.fastjson.JSONObject;
+import com.wlf.demo.AmqpConfig;
+import com.wlf.demo.annotation.MessageCache;
+import com.wlf.demo.util.CacheCorrelationData;
 
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessagePropertiesBuilder;
-import org.springframework.amqp.rabbit.connection.Connection;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.connection.SimpleResourceHolder;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.core.RabbitTemplate.ReturnCallback;
-import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value; 
 
 @Service("orderService")
 public class OrderService {
 	
-	@Value("${spring.rabbitmq.keys.orderBounding}")
-	private String boundingKey;
+	private String orderSaveKey=AmqpConfig.ROUNTING_KEY_PREFIX+"."+AmqpConfig.ORDER_SAVE_ROUTING_KEY;
 	
 	@Value("${spring.rabbitmq.exchange}")
-	private String testExchange;
-	
-	@Autowired
-	private RabbitmqProps rabbitmqProps;
+	private String orderExchange;
 
 	@Autowired
 	private RabbitTemplate rabbitTemplate;
@@ -38,16 +30,13 @@ public class OrderService {
         //rabbitTemplate.setConfirmCallback(this); 
     //}  
 	
-	public void saveOrder(String id){
-		//rabbitTemplate.setRoutingKey("aaa"/*rabbitmqProps.getKeys().get("orderRouting")*/);
-		CorrelationData correlationId = new CorrelationData(id);
-		//SimpleResourceHolder.bind(rabbitTemplate.getConnectionFactory(), "vhostA");
-		rabbitTemplate.setMandatory(true);
-		
-		//Message msg=new Message(id.getBytes(),MessagePropertiesBuilder.newInstance().setExpiration("10000").build());
-		rabbitTemplate.convertAndSend(testExchange, "order", id, correlationId);
-
-		//SimpleResourceHolder.unbind(rabbitTemplate.getConnectionFactory());
+	//@MessageCache为自定义注释，用来设置缓存和原交换机、路由键等相关信息
+	@MessageCache(cacheName="order",cacheKey="${arg.correlationId}",messageArgMapper="order",exchange="${field.testExchange}",routingKey="${field.orderSaveKey}")
+	public void sendOrderMessage(String correlationId,Object order) throws Exception{
+		//扩展CorrelationData，使其包含缓存信息，方便确认机制返回失败后重发
+		CacheCorrelationData correlation = new CacheCorrelationData(correlationId,"order");
+		Message msg=new Message(JSONObject.toJSONString(order).getBytes(),MessagePropertiesBuilder.newInstance().setContentType("text/x-json").build());//.setExpiration("10000").build());
+		rabbitTemplate.send(orderExchange, orderSaveKey, msg, correlation);
 	}
 	
 }

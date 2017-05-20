@@ -7,13 +7,12 @@ logging:
     
 spring:
   rabbitmq: 
-    addresses: 192.168.58.144:5672
+    addresses: 192.168.58.145:5672
     username: admin
     password: nmamtf  
     publisherConfirms: true
-    queueName: testQueue
+    queueName: orderQueue
     keys:
-      orderRouting: order
-      orderBounding: order
-    exchange: testExchange
+      orderRouting: wlf.bussiness.order.*
+    exchange: orderExchange
     
