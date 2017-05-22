@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="10 seconds">
+              
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%date [%thread] %-5level %logger{36} - %msg%n" />                
+                    
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+    	<withJansi>true</withJansi>
+		<encoder>
+           <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+		   <charset>UTF-8</charset>
+   		</encoder>
+    </appender>      
+    
+    <appender name="dailyRollingFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+	  <File>C:/vehicle-log/main.log</File>
+	  <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+	    <FileNamePattern>rest-demo.%d{yyyy-MM-dd}.log</FileNamePattern>
+	    <maxHistory>1</maxHistory>         
+	  </rollingPolicy>
+	  <encoder>
+	    <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{35} - %msg %n</Pattern>
+	    <charset>UTF-8</charset>
+	  </encoder>        
+	   <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+	    <level>TRACE</level>
+	  </filter>
+	</appender>
+          
+    <springProfile name="!production"> 
+        <logger name="com.wlf.demo" level="DEBUG" />
+        <logger name="org.springframework.web" level="INFO"/>
+        <root level="info">  
+	        <appender-ref ref="stdout" />  
+	        <appender-ref ref="dailyRollingFileAppender" />  
+	    </root> 
+    </springProfile>
+	
+</configuration>
